@@ -1,9 +1,27 @@
 node_modules/
 out/
 dist/
+
+# Артефакты сборки TypeScript
+*.tsbuildinfo
+
+# Логи и временное
 *.log
 .DS_Store
+Thumbs.db
+
+# Whisper: бинарник и модели (доставляются отдельно, не в репозиторий)
+resources/whisper/
 resources/whisper-models/*.bin
 resources/whisper-models/*.gguf
+
+# Секреты и окружение (на всякий случай — реальные лежат в %APPDATA%)
 .env
 .env.local
+*.local
+secrets.json
+
+# Редакторы
+.vscode/
+.idea/
+.vite/
