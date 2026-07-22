@@ -29,7 +29,8 @@ interface ModelOption {
 
 /** Модели для API-ключа AllTokens (все с поддержкой изображений — нужно для вопросов с экрана). */
 const API_MODELS: ModelOption[] = [
-  { id: 'google/gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite — дёшево, фото+аудио (рекоменд.)' },
+  { id: 'google/gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite — быстро, фото+аудио (по умолчанию)' },
+  { id: 'google/gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite — дёшево, фото+аудио' },
   { id: 'google/gemini-3.5-flash', label: 'Gemini 3.5 Flash — сильнее, мультимодальная' },
   { id: 'anthropic/claude-sonnet-5', label: 'Claude Sonnet 5 — премиум, фото, 1M контекст' },
   { id: 'x-ai/grok-4.5', label: 'Grok 4.5 — reasoning, фото' },
@@ -414,7 +415,7 @@ function SettingsApp(): JSX.Element {
               {customModel && (
                 <input
                   type="text"
-                  placeholder="Точный ID модели, напр. google/gemini-3.5-flash"
+                  placeholder="Точный ID модели, напр. google/gemini-3.5-flash-lite"
                   value={provider.model}
                   onChange={(e) => patchProvider({ model: e.target.value })}
                   style={{ marginTop: 8 }}

@@ -6,7 +6,7 @@ export type ProviderConfig =
       kind: 'apikey'
       /** OpenAI-совместимый base URL. По умолчанию AllTokens. */
       baseUrl: string
-      /** Идентификатор модели, например 'google/gemini-3.1-flash-lite'. */
+      /** Идентификатор модели, например 'google/gemini-3.5-flash-lite'. */
       model: string
     }
   | { kind: 'oauth-google'; model: string }
@@ -76,7 +76,7 @@ export interface Settings {
 }
 
 export const DEFAULT_ALLTOKENS_BASE_URL = 'https://api.alltokens.ru/api/v1'
-export const DEFAULT_MODEL = 'google/gemini-3.1-flash-lite'
+export const DEFAULT_MODEL = 'google/gemini-3.5-flash-lite'
 
 export const DEFAULT_HOTKEYS: HotkeyMap = {
   toggleOverlay: 'Control+\\',
