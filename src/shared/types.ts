@@ -104,15 +104,15 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   hotkeys: DEFAULT_HOTKEYS,
   stt: {
-    mode: 'local-whisper',
+    mode: 'cloud-alltokens',
     whisperModel: 'base',
     captureSystemAudio: true,
     captureMicrophone: true,
     language: 'auto'
   },
   behavior: {
-    autoAnswerQuestions: false,
-    classifyQuestions: true,
+    autoAnswerQuestions: true,
+    classifyQuestions: false,
     systemPrompt: DEFAULT_SYSTEM_PROMPT,
     launchOnStartup: false,
     overlayOpacity: 0.95

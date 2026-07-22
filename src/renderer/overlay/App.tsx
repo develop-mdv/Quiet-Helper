@@ -117,8 +117,9 @@ export function OverlayApp(): JSX.Element {
         onError: (msg) => dispatch({ t: 'error', id: 'audio', message: msg })
       }
     )
-    setListening(true)
-    window.api.setListeningState(true)
+    const running = pipeline.current.isRunning()
+    setListening(running)
+    window.api.setListeningState(running)
   }, [])
 
   const stopListening = useCallback(() => {

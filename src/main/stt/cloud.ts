@@ -15,7 +15,9 @@ export async function transcribeCloud(wavBase64: string, language: string): Prom
   }
   const provider = settingsStore.get().provider
   const baseUrl = provider.kind === 'apikey' ? provider.baseUrl : DEFAULT_ALLTOKENS_BASE_URL
-  const model = provider.kind === 'apikey' ? provider.model : DEFAULT_MODEL
+  // Ответы могут идти через Claude/Grok или OAuth, но они не обязаны принимать
+  // input_audio. Для STT всегда используем проверенную мультимодальную Gemini.
+  const model = DEFAULT_MODEL
 
   const langHint =
     language && language !== 'auto' ? ` Язык аудио: ${language}.` : ''

@@ -99,50 +99,63 @@ export function registerIpc(): void {
   ipcMain.on(IPC.quitApp, () => app.quit())
 
   // ---- Аудио-сегмент из рендерера: транскрибируем и раздаём как транскрипт ----
-  ipcMain.on(
-    IPC.audioSegment,
-    async (_e, payload: { source: AudioSourceKind; wav: string }) => {
-      try {
-        const text = await transcribe(payload.wav)
-        if (!text) return
-        const seg: TranscriptSegment = {
-          id: randomUUID(),
-          source: payload.source,
-          text,
-          isQuestion: isQuestion(text),
-          startedAt: Date.now(),
-          final: true
-        }
-        transcriptBuffer.add(seg)
-        windows.sendToOverlay(IPC.onTranscript, seg)
+  type AudioPayload = { source: AudioSourceKind; wav: string }
+  let transcriptionQueue: Promise<void> = Promise.resolve()
+  let answerQueue: Promise<void> = Promise.resolve()
 
-        // Авто-ответ на вопрос собеседника, если включено в настройках.
-        const behavior = settingsStore.get().behavior
-        if (seg.isQuestion && behavior.autoAnswerQuestions) {
-          void (async () => {
-            // Опциональный LLM-фильтр: точно ли это вопрос ко мне.
-            if (behavior.classifyQuestions) {
-              try {
-                const ok = await isAnswerableQuestion(seg.text, transcriptBuffer.recentText())
-                if (!ok) return
-              } catch {
-                // Классификатор недоступен — не теряем вопрос, отвечаем.
-              }
-            }
-            windows.showOverlay()
-            const emit = (ev: StreamEvent): void => windows.sendToOverlay(IPC.onStream, ev)
-            await askService.ask({ prompt: seg.text, includeTranscript: true }, emit)
-          })()
-        }
-      } catch (err) {
-        windows.sendToOverlay(IPC.onStream, {
-          type: 'error',
-          requestId: 'stt',
-          message: err instanceof Error ? err.message : String(err)
-        } satisfies StreamEvent)
+  const emitAudioError = (err: unknown): void => {
+    windows.sendToOverlay(IPC.onStream, {
+      type: 'error',
+      requestId: 'stt',
+      message: err instanceof Error ? err.message : String(err)
+    } satisfies StreamEvent)
+  }
+
+  const answerTranscript = async (seg: TranscriptSegment): Promise<void> => {
+    const behavior = settingsStore.get().behavior
+    if (!behavior.autoAnswerQuestions) return
+
+    // Опциональный LLM-фильтр: точно ли это вопрос ко мне.
+    if (behavior.classifyQuestions) {
+      try {
+        const ok = await isAnswerableQuestion(seg.text, transcriptBuffer.recentText())
+        if (!ok) return
+      } catch {
+        // Классификатор недоступен — не теряем вопрос, отвечаем.
       }
     }
-  )
+    windows.showOverlay()
+    const emit = (ev: StreamEvent): void => windows.sendToOverlay(IPC.onStream, ev)
+    await askService.ask({ prompt: seg.text, includeTranscript: true }, emit)
+  }
+
+  const processAudioSegment = async (payload: AudioPayload): Promise<void> => {
+    const text = await transcribe(payload.wav)
+    if (!text) return
+    const seg: TranscriptSegment = {
+      id: randomUUID(),
+      source: payload.source,
+      text,
+      isQuestion: isQuestion(text),
+      startedAt: Date.now(),
+      final: true
+    }
+    transcriptBuffer.add(seg)
+    windows.sendToOverlay(IPC.onTranscript, seg)
+
+    if (seg.isQuestion && settingsStore.get().behavior.autoAnswerQuestions) {
+      // Ответы идут строго по одному. Ошибка одной задачи не ломает очередь.
+      answerQueue = answerQueue.then(() => answerTranscript(seg)).catch(emitAudioError)
+    }
+  }
+
+  ipcMain.on(IPC.audioSegment, (_e, payload: AudioPayload) => {
+    // VAD микрофона и системного звука может завершить два сегмента одновременно.
+    // Последовательная очередь сохраняет порядок и не создаёт всплеск API-вызовов.
+    transcriptionQueue = transcriptionQueue
+      .then(() => processAudioSegment(payload))
+      .catch(emitAudioError)
+  })
 
   ipcMain.on(IPC.listeningState, (_e, listening: boolean) => {
     windows.broadcast(IPC.listeningState, listening)

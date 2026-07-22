@@ -144,6 +144,49 @@ function SettingsApp(): JSX.Element {
     setTest(null)
   }
 
+  /** Атомарно включает весь рабочий контур, а не только провайдера ответов. */
+  const enableAllTokensFullCycle = async (): Promise<void> => {
+    const enteredKey = apiKey.trim()
+    if (!hasKey && !enteredKey) {
+      setTest({ ok: false, message: 'Сначала введите API-ключ AllTokens.' })
+      return
+    }
+    if (enteredKey) {
+      await window.api.setSecret(SECRET_ALLTOKENS, enteredKey)
+      setHasKey(true)
+      setApiKey('')
+    }
+
+    const nextProvider: ProviderConfig = {
+      kind: 'apikey',
+      baseUrl: DEFAULT_ALLTOKENS_BASE_URL,
+      model: DEFAULT_MODEL
+    }
+    const nextStt: Settings['stt'] = { ...settings.stt, mode: 'cloud-alltokens' }
+    const nextBehavior: Settings['behavior'] = {
+      ...settings.behavior,
+      autoAnswerQuestions: true,
+      // Локальная эвристика уже находит вопросы. Второй LLM-вызов увеличивает
+      // задержку и занимает ещё один API-слот перед каждым ответом.
+      classifyQuestions: false
+    }
+    setSettings({
+      ...settings,
+      provider: nextProvider,
+      stt: nextStt,
+      behavior: nextBehavior
+    })
+    setCustomModel(false)
+    await window.api.updateSettings({
+      provider: nextProvider,
+      stt: nextStt,
+      behavior: nextBehavior
+    })
+    setTest({ ok: true, message: 'Полный цикл AllTokens включён: аудио → текст → автоответ.' })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 1800)
+  }
+
   const save = async (markOnboarded = false): Promise<void> => {
     if (apiKey.trim()) {
       await window.api.setSecret(SECRET_ALLTOKENS, apiKey.trim())
@@ -242,6 +285,28 @@ function SettingsApp(): JSX.Element {
       {/* Провайдер */}
       <div className="section">
         <h2>Модель и доступ</h2>
+        <div
+          className={
+            provider.kind === 'apikey' &&
+            settings.stt.mode === 'cloud-alltokens' &&
+            settings.behavior.autoAnswerQuestions
+              ? 'status ok'
+              : 'warn-box'
+          }
+        >
+          <div>
+            <b>Полный цикл через AllTokens API</b>
+            <br />
+            Один режим включает ответы, облачную расшифровку и автоответ на найденные вопросы.
+          </div>
+          <button
+            className="btn primary"
+            style={{ marginTop: 10 }}
+            onClick={() => void enableAllTokensFullCycle()}
+          >
+            Включить полный цикл API
+          </button>
+        </div>
         <div className="field">
           <label>Провайдер</label>
           <div className="pill-group">

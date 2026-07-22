@@ -106,16 +106,22 @@ export class AudioPipeline {
   async start(opts: { mic: boolean; system: boolean }, handlers: AudioHandlers): Promise<void> {
     if (this.running) return
     this.running = true
-    try {
-      if (opts.mic) {
+    if (opts.mic) {
+      try {
         const micStream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation: true, noiseSuppression: true }
         })
         const rec = new SourceRecorder(micStream, 'microphone', handlers)
         rec.start()
         this.recorders.push(rec)
+      } catch (err) {
+        handlers.onError(
+          `Микрофон не запущен: ${err instanceof Error ? err.message : String(err)}`
+        )
       }
-      if (opts.system) {
+    }
+    if (opts.system) {
+      try {
         // getDisplayMedia требует video-трек; берём только audio (loopback),
         // видео сразу останавливаем.
         const dispStream = await navigator.mediaDevices.getDisplayMedia({
@@ -131,12 +137,15 @@ export class AudioPipeline {
           rec.start()
           this.recorders.push(rec)
         }
+      } catch (err) {
+        handlers.onError(
+          `Системный звук не запущен: ${err instanceof Error ? err.message : String(err)}`
+        )
       }
-    } catch (err) {
-      this.running = false
-      handlers.onError(err instanceof Error ? err.message : String(err))
-      this.stop()
     }
+
+    this.running = this.recorders.length > 0
+    if (!this.running) handlers.onError('Не удалось запустить ни один источник аудио.')
   }
 
   stop(): void {
