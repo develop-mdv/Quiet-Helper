@@ -36,6 +36,9 @@ export class OpenAiCompatProvider implements LLMProvider {
           {
             model: params.model || this.defaultModel,
             messages: toOpenAiMessages(params.messages) as never,
+            // Без явного лимита AllTokens может зарезервировать слишком большую
+            // потенциальную стоимость и вернуть 429 даже для короткого ответа.
+            max_tokens: params.maxTokens ?? 1600,
             stream: true
           },
           { signal: params.signal }
@@ -58,6 +61,7 @@ export class OpenAiCompatProvider implements LLMProvider {
       let received = ''
       await this.streamChat({
         model: this.defaultModel,
+        maxTokens: 16,
         messages: [{ role: 'user', content: 'Ответь одним словом: ok' }],
         onDelta: (t) => {
           received += t

@@ -20,6 +20,7 @@ export async function isAnswerableQuestion(text: string, context: string): Promi
   try {
     await provider.streamChat({
       model: settings.provider.model,
+      maxTokens: 8,
       signal: controller.signal,
       messages: [
         {

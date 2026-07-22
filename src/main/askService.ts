@@ -89,6 +89,7 @@ class AskService {
       const provider = buildProvider(settings.provider)
       await provider.streamChat({
         model: settings.provider.model,
+        maxTokens: 1600,
         messages,
         signal: controller.signal,
         onDelta: (t) => {
@@ -116,6 +117,7 @@ class AskService {
     let out = ''
     await provider.streamChat({
       model: settings.provider.model,
+      maxTokens: 192,
       messages: [
         {
           role: 'system',

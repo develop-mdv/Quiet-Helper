@@ -3,6 +3,8 @@ import type { ChatMessage } from '@shared/types'
 export interface StreamChatParams {
   messages: ChatMessage[]
   model: string
+  /** Ограничивает резерв баланса и максимальную длину ответа у API-провайдера. */
+  maxTokens?: number
   signal?: AbortSignal
   onDelta: (text: string) => void
 }

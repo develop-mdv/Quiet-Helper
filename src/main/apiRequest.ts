@@ -192,13 +192,15 @@ function isAbortError(error: unknown): boolean {
 }
 
 function retryDelayMs(error: unknown, attempt: number): number {
+  const base = Math.min(MAX_BACKOFF_DELAY_MS, 750 * 2 ** attempt)
+  const backoffWithJitter = Math.round(base * (1 + Math.random() * 0.25))
   const serverDelay = retryAfterFromError(error)
   if (serverDelay !== undefined) {
-    return Math.min(MAX_SERVER_RETRY_DELAY_MS, Math.max(0, serverDelay))
+    // AllTokens may return reset=0 while an earlier in-flight request is still
+    // releasing reserved balance. Never turn that hint into a retry storm.
+    return Math.min(MAX_SERVER_RETRY_DELAY_MS, Math.max(backoffWithJitter, serverDelay))
   }
-
-  const base = Math.min(MAX_BACKOFF_DELAY_MS, 750 * 2 ** attempt)
-  return Math.round(base * (1 + Math.random() * 0.25))
+  return backoffWithJitter
 }
 
 function retryAfterFromError(error: unknown): number | undefined {

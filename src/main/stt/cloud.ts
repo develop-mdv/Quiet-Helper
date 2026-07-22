@@ -31,6 +31,9 @@ export async function transcribeCloud(wavBase64: string, language: string): Prom
       },
       body: JSON.stringify({
         model,
+        // 15-секундному аудиосегменту этого достаточно; явный лимит не даёт
+        // AllTokens резервировать баланс как для длинной генерации.
+        max_tokens: 192,
         messages: [
           {
             role: 'user',
