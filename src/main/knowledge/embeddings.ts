@@ -1,6 +1,7 @@
 import { secretStore, SECRET_KEYS } from '../secrets'
 import { settingsStore } from '../settingsStore'
 import { DEFAULT_ALLTOKENS_BASE_URL } from '@shared/types'
+import { apiErrorFromResponse, runApiRequest } from '../apiRequest'
 
 /** Есть ли ключ AllTokens для вычисления эмбеддингов. */
 export function isEmbeddingConfigured(): boolean {
@@ -30,16 +31,15 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
   const out: number[][] = []
   for (let i = 0; i < texts.length; i += BATCH) {
     const batch = texts.slice(i, i + BATCH)
-    const res = await fetch(`${baseUrl}/embeddings`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, input: batch })
+    const json = await runApiRequest(async () => {
+      const res = await fetch(`${baseUrl}/embeddings`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, input: batch })
+      })
+      if (!res.ok) throw await apiErrorFromResponse(res, 'Эмбеддинги')
+      return (await res.json()) as { data?: { embedding: number[]; index: number }[] }
     })
-    if (!res.ok) {
-      const detail = await res.text().catch(() => '')
-      throw new Error(`Эмбеддинги: HTTP ${res.status}. ${detail.slice(0, 160)}`)
-    }
-    const json = (await res.json()) as { data?: { embedding: number[]; index: number }[] }
     const data = (json.data ?? []).slice().sort((a, b) => a.index - b.index)
     for (const d of data) out.push(d.embedding)
   }

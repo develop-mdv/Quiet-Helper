@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import type { LLMProvider, ProviderTestResult, StreamChatParams } from './provider'
 import { toOpenAiMessages } from './provider'
+import { apiErrorStatus, runApiRequest } from '../apiRequest'
 
 /**
  * OpenAI-совместимый клиент. По умолчанию указывает на AllTokens
@@ -18,6 +19,9 @@ export class OpenAiCompatProvider implements LLMProvider {
     this.client = new OpenAI({
       apiKey: opts.apiKey,
       baseURL: opts.baseUrl,
+      // Retries are coordinated process-wide so all API-key consumers share
+      // the same concurrency limit and Retry-After pause.
+      maxRetries: 0,
       // openai SDK по умолчанию запрещает работу вне браузера-безопасного контекста;
       // мы в main-процессе Electron (Node), поэтому всё ок.
       dangerouslyAllowBrowser: false
@@ -25,19 +29,28 @@ export class OpenAiCompatProvider implements LLMProvider {
   }
 
   async streamChat(params: StreamChatParams): Promise<void> {
-    const stream = await this.client.chat.completions.create(
-      {
-        model: params.model || this.defaultModel,
-        messages: toOpenAiMessages(params.messages) as never,
-        stream: true
-      },
-      { signal: params.signal }
-    )
+    let emitted = false
+    await runApiRequest(
+      async () => {
+        const stream = await this.client.chat.completions.create(
+          {
+            model: params.model || this.defaultModel,
+            messages: toOpenAiMessages(params.messages) as never,
+            stream: true
+          },
+          { signal: params.signal }
+        )
 
-    for await (const chunk of stream) {
-      const delta = chunk.choices?.[0]?.delta?.content
-      if (delta) params.onDelta(delta)
-    }
+        for await (const chunk of stream) {
+          const delta = chunk.choices?.[0]?.delta?.content
+          if (delta) {
+            emitted = true
+            params.onDelta(delta)
+          }
+        }
+      },
+      { signal: params.signal, retryIf: () => !emitted }
+    )
   }
 
   async test(): Promise<ProviderTestResult> {
@@ -58,6 +71,9 @@ export class OpenAiCompatProvider implements LLMProvider {
 }
 
 export function describeError(err: unknown): string {
+  if (apiErrorStatus(err) === 429) {
+    return 'API временно занят (HTTP 429): автоматические повторы не помогли. Подождите немного и повторите запрос.'
+  }
   if (err instanceof OpenAI.APIError) {
     return `HTTP ${err.status ?? '?'}: ${err.message}`
   }
