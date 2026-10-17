@@ -30,6 +30,7 @@ export function reassertStealth(win: BrowserWindow): void {
   if (win.isDestroyed()) return
   win.setContentProtection(true)
   win.setAlwaysOnTop(true, 'screen-saver')
+  win.setSkipTaskbar(true)
 }
 
 /**
@@ -37,5 +38,7 @@ export function reassertStealth(win: BrowserWindow): void {
  * звонка). forward: true позволяет всё же получать hover-события в рендерере.
  */
 export function setClickThrough(win: BrowserWindow, enabled: boolean): void {
+  // Игнорирование мыши само по себе не запрещает активацию окна с клавиатуры.
+  win.setFocusable(!enabled)
   win.setIgnoreMouseEvents(enabled, { forward: true })
 }

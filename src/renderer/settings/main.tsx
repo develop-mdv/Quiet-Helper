@@ -32,6 +32,7 @@ const API_MODELS: ModelOption[] = [
   { id: 'google/gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite — быстро, фото+аудио (по умолчанию)' },
   { id: 'google/gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite — дёшево, фото+аудио' },
   { id: 'google/gemini-3.5-flash', label: 'Gemini 3.5 Flash — сильнее, мультимодальная' },
+  { id: 'google/gemini-3.8-flash', label: 'Gemini 3.8 Flash — сильнее, мультимодальная' },
   { id: 'anthropic/claude-sonnet-5', label: 'Claude Sonnet 5 — премиум, фото, 1M контекст' },
   { id: 'x-ai/grok-4.5', label: 'Grok 4.5 — reasoning, фото' },
   { id: 'qwen/qwen3.7-plus', label: 'Qwen3.7 Plus — экономно, фото' }

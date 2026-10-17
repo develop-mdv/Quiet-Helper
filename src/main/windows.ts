@@ -65,7 +65,7 @@ class WindowManager {
     win.on('closed', () => {
       this.overlay = null
     })
-    win.once('ready-to-show', () => win.show())
+    win.once('ready-to-show', () => win.showInactive())
 
     this.overlay = win
     return win
@@ -80,7 +80,7 @@ class WindowManager {
     if (win.isVisible()) {
       win.hide()
     } else {
-      win.show()
+      win.showInactive()
       reassertStealth(win)
     }
   }
@@ -91,7 +91,7 @@ class WindowManager {
 
   showOverlay(): void {
     const win = this.overlay && !this.overlay.isDestroyed() ? this.overlay : this.createOverlay()
-    win.show()
+    win.showInactive()
     reassertStealth(win)
   }
 
@@ -135,6 +135,7 @@ class WindowManager {
       title: 'Настройки — Quiet Helper',
       resizable: true,
       minimizable: true,
+      skipTaskbar: true,
       show: false,
       webPreferences: {
         preload: join(__dirname, '../preload/index.js'),
