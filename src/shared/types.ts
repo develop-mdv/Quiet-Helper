@@ -28,6 +28,8 @@ export interface HotkeyMap {
   toggleClickThrough: string
   prevAnswer: string
   nextAnswer: string
+  scrollUp: string
+  scrollDown: string
 }
 
 export type KnowledgeSearchMode = 'lexical' | 'semantic' | 'hybrid'
@@ -87,7 +89,9 @@ export const DEFAULT_HOTKEYS: HotkeyMap = {
   panicHide: 'Control+Shift+X',
   toggleClickThrough: 'Control+Shift+C',
   prevAnswer: 'Control+Alt+Left',
-  nextAnswer: 'Control+Alt+Right'
+  nextAnswer: 'Control+Alt+Right',
+  scrollUp: 'Alt+Up',
+  scrollDown: 'Alt+Down'
 }
 
 export const DEFAULT_SYSTEM_PROMPT =

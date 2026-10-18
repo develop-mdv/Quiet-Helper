@@ -187,8 +187,11 @@ body {
 
 .overlay-body-scroll {
   flex: 1;
+  min-width: 0;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
+  overflow-wrap: anywhere;
   padding: 12px 14px;
   font-size: 13.5px;
   line-height: 1.55;
@@ -214,13 +217,19 @@ body {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px;
-  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   font-family: var(--mono);
   font-size: 12.5px;
 }
 .answer code {
   font-family: var(--mono);
   font-size: 12.5px;
+}
+.answer pre code.hljs {
+  overflow: visible;
+  white-space: inherit;
+  padding: 0;
 }
 .answer :not(pre) > code {
   background: var(--panel-2);
@@ -233,15 +242,53 @@ body {
   margin: 6px 0;
 }
 
-/* Формулы KaTeX: блочные — со скроллом, чтобы не ломать вёрстку */
+.answer table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.answer :is(th, td) {
+  overflow-wrap: anywhere;
+}
+.answer img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Формулы тоже переносятся, без отдельной горизонтальной прокрутки. */
 .answer .katex-display {
-  overflow-x: auto;
-  overflow-y: hidden;
   padding: 4px 0;
   margin: 8px 0;
 }
 .answer .katex {
   font-size: 1.05em;
+}
+.answer .katex.math-wrap {
+  display: inline-block;
+  position: relative;
+  max-width: 100%;
+}
+.answer .katex-display > .katex.math-wrap {
+  display: block;
+}
+.answer .katex.math-wrap > .katex-html {
+  display: inline-block;
+  white-space: nowrap;
+}
+.answer .katex.math-wrap-source {
+  width: 100%;
+  overflow: hidden;
+}
+.answer .math-wrap-source > .katex-html {
+  position: absolute;
+  visibility: hidden;
+}
+.answer .math-source {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-align: left;
+  line-height: 1.55;
 }
 
 .placeholder {

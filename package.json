@@ -42,5 +42,11 @@
     "react-dom": "^18.3.1",
     "typescript": "^5.6.3",
     "vite": "^8.3.4"
+  },
+  "overrides": {
+    "katex": "$katex",
+    "@electron/get": {
+      "global-agent": "^4.1.3"
+    }
   }
 }

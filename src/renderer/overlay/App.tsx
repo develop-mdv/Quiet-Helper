@@ -87,17 +87,38 @@ export function OverlayApp(): JSX.Element {
   const [kbCount, setKbCount] = useState(0)
 
   const scrollRef = useRef<HTMLDivElement>(null)
+  const followAnswer = useRef(true)
   const pipeline = useRef<AudioPipeline | null>(null)
 
   const cur = history.entries[history.current] as AnswerEntry | undefined
   const busy = cur?.status === 'streaming'
   const total = history.entries.length
 
-  // Автоскролл вниз при стриминге текущего ответа.
+  // Новый ответ снова следует за стримом; ручная прокрутка вверх приостанавливает это.
+  useEffect(() => {
+    followAnswer.current = true
+  }, [cur?.id])
+
   useEffect(() => {
     const el = scrollRef.current
-    if (el) el.scrollTop = el.scrollHeight
-  }, [cur?.text, history.current])
+    if (el && followAnswer.current) el.scrollTop = el.scrollHeight
+  }, [cur?.text, cur?.id])
+
+  const updateScrollFollowing = useCallback(() => {
+    const el = scrollRef.current
+    if (el) followAnswer.current = el.scrollHeight - el.clientHeight - el.scrollTop <= 8
+  }, [])
+
+  const scrollAnswer = useCallback(
+    (direction: -1 | 1) => {
+      const el = scrollRef.current
+      if (!el) return
+      // Без анимации: повторные нажатия работают сразу, стрим не сбивает прокрутку.
+      el.scrollBy({ top: direction * 200, behavior: 'instant' })
+      updateScrollFollowing()
+    },
+    [updateScrollFollowing]
+  )
 
   const handleStream = useCallback((e: StreamEvent) => {
     if (e.type === 'start') dispatch({ t: 'start', id: e.requestId, title: e.title ?? 'Вопрос' })
@@ -151,8 +172,8 @@ export function OverlayApp(): JSX.Element {
         setTranscript([])
       } else if (cmd === 'prev-answer') dispatch({ t: 'prev' })
       else if (cmd === 'next-answer') dispatch({ t: 'next' })
-      else if (cmd === 'scroll-up') scrollRef.current?.scrollBy({ top: -200, behavior: 'smooth' })
-      else if (cmd === 'scroll-down') scrollRef.current?.scrollBy({ top: 200, behavior: 'smooth' })
+      else if (cmd === 'scroll-up') scrollAnswer(-1)
+      else if (cmd === 'scroll-down') scrollAnswer(1)
     })
     return () => {
       offStream()
@@ -162,7 +183,7 @@ export function OverlayApp(): JSX.Element {
       offSettings()
       offCmd()
     }
-  }, [handleStream, toggleListening])
+  }, [handleStream, toggleListening, scrollAnswer])
 
   const toggleKb = async (): Promise<void> => {
     const s = await window.api.getSettings()
@@ -281,7 +302,7 @@ export function OverlayApp(): JSX.Element {
           </div>
         )}
 
-        <div className="overlay-body-scroll" ref={scrollRef}>
+        <div className="overlay-body-scroll" ref={scrollRef} onScroll={updateScrollFollowing}>
           {cur?.error && <div className="error-banner">{cur.error}</div>}
           {cur && !cur.error && cur.text && <Markdown text={cur.text} />}
           {cur && !cur.error && !cur.text && cur.status === 'streaming' && (
@@ -298,6 +319,8 @@ export function OverlayApp(): JSX.Element {
                 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> — слушать разговор
                 <br />
                 <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd> — листать ответы
+                <br />
+                <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> — прокручивать ответ
                 <br />
                 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> — сделать окно активным для ввода
               </p>

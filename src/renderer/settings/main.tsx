@@ -755,7 +755,9 @@ function SettingsApp(): JSX.Element {
             ['panicHide', 'Паника (скрыть)'],
             ['toggleClickThrough', 'Сквозной режим вкл/выкл'],
             ['prevAnswer', 'Предыдущий ответ'],
-            ['nextAnswer', 'Следующий ответ']
+            ['nextAnswer', 'Следующий ответ'],
+            ['scrollUp', 'Прокрутить ответ вверх'],
+            ['scrollDown', 'Прокрутить ответ вниз']
           ] as const
         ).map(([key, label]) => (
           <div className="field" key={key}>

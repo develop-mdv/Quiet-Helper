@@ -27,15 +27,15 @@ export function registerHotkeys(): void {
   bind(hk.toggleClickThrough, () => commands.toggleClickThrough())
   bind(hk.prevAnswer, () => commands.forwardToOverlay('prev-answer'))
   bind(hk.nextAnswer, () => commands.forwardToOverlay('next-answer'))
+  bind(hk.scrollUp, () => commands.forwardToOverlay('scroll-up'))
+  bind(hk.scrollDown, () => commands.forwardToOverlay('scroll-down'))
 
-  // Перемещение оверлея и скролл ответа.
+  // Перемещение оверлея.
   const step = 40
   bind('Control+Up', () => windows.moveOverlay(0, -step))
   bind('Control+Down', () => windows.moveOverlay(0, step))
   bind('Control+Left', () => windows.moveOverlay(-step, 0))
   bind('Control+Right', () => windows.moveOverlay(step, 0))
-  bind('Alt+Up', () => commands.forwardToOverlay('scroll-up'))
-  bind('Alt+Down', () => commands.forwardToOverlay('scroll-down'))
 }
 
 export function unregisterHotkeys(): void {
